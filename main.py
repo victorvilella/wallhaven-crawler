@@ -9,5 +9,4 @@ if __name__ == "__main__":
     # Argv 1 = Query string
     # Argv 2 = Download location directory
     t = Downloader(sys.argv[1], sys.argv[2])
-    t.start()
-    threads.append(t)
+    t.run()
