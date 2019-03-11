@@ -1,3 +1,8 @@
 downloads/
 .idea/
+.vscode/
 __pycache__/
+*.png
+*.jpg
+*.bmp
+*.gif

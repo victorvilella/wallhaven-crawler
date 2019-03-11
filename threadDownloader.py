@@ -1,12 +1,15 @@
 from threading import Thread
 from time import sleep
 from bs4 import BeautifulSoup
+import pathlib
 import os
 import requests
 
 
 class Downloader:
     results = None
+
+    MAX_DOWNLOADS_SAME_TIME = 10
 
     def __init__(self, query, location):
         self.q = query
@@ -41,25 +44,29 @@ class Downloader:
 
     def handle(self):
         while len(self.results):
-            threads = []
-            for i in range(0, 4):
-                aux = self.results.pop()
-                url = aux["href"]
-                self.downloadFile(url)
-                # t = Thread(target=self.downloadFile, args=(url,))
-                # t.start()
-                # threads.append(t)
-            for i in range(0, 4):
-                threads[i].join()
-            
+            try:
+                threads = []
+                for i in range(0, self.MAX_DOWNLOADS_SAME_TIME):
+                    aux = self.results.pop()
+                    url = aux["href"]
+                    t = Thread(target=self.downloadFile, args=(url,))
+                    t.start()
+                    threads.append(t)
+                for i in range(0, self.MAX_DOWNLOADS_SAME_TIME):
+                    threads[i].join()
+            except IndexError: # Need rewrite this part
+                print("Done")
+            except Exception as e:
+                print(e.__str__())            
 
 
     def downloadFile(self, url):
         photo = BeautifulSoup(requests.get(url).text, "html.parser").find("img", {"id": "wallpaper"})["src"]
         aux = os.path.join(self.location + self.q)
+        current_dir = os.path.dirname(__file__)
         if not os.path.isdir(aux):
-            os.mkdir(aux)
-        filename = os.path.join(aux, photo.split("/")[-1])
+            pathlib.Path(os.path.join(current_dir, aux)).mkdir(parents=True, exist_ok=True)
+        filename = os.path.join(os.path.join(current_dir, aux), photo.split("/")[-1])
         r = requests.get("https:"+ photo, stream=True)
         resource = r.content
         r.close()
